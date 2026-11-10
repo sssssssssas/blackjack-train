@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BJ Trainer">
+<meta name="theme-color" content="#060907">
+<meta name="format-detection" content="telephone=no">
+
+<!-- Apple Touch Icon (Data URI SVG) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'%3E%3Crect width='180' height='180' rx='40' fill='%2308110b'/%3E%3Ccircle cx='90' cy='90' r='76' fill='none' stroke='%2310b981' stroke-width='3' stroke-dasharray='6,4' opacity='0.4'/%3E%3Crect x='36' y='42' width='60' height='88' rx='8' fill='%23ffffff' transform='rotate(-12 66 86)' filter='drop-shadow(0 4px 10px rgba(0,0,0,0.6))'/%3E%3Ctext x='48' y='72' font-family='Georgia,serif' font-size='24' font-weight='bold' fill='%23dc2626' transform='rotate(-12 66 86)'%3EA♥%3C/text%3E%3Crect x='74' y='48' width='60' height='88' rx='8' fill='%23ffffff' transform='rotate(10 104 92)' filter='drop-shadow(0 6px 14px rgba(0,0,0,0.7))'/%3E%3Ctext x='86' y='78' font-family='Georgia,serif' font-size='22' font-weight='bold' fill='%2318181b' transform='rotate(10 104 92)'%3EK♠%3C/text%3E%3Ctext x='90' y='160' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='14' font-weight='bold' fill='%2334d399' letter-spacing='2'%3E21 PRO%3C/text%3E%3C/svg%3E">
+
+<title>Blackjack Strategy Trainer - Pro iPhone Edition</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  /* ── iOS Native Reset & Screen Locking ── */
+  *, *::before, *::after {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    box-sizing: border-box;
+  }
+  
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+  }
+
+  html, body {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    user-select: none;
+    -webkit-user-select: none;
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at 50% 20%, #0d1a12 0%, #060907 80%, #030504 100%);
+    color: #f3f4f6;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* ── App Shell Container ── */
+  #app-root {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    padding-top: max(var(--sat), 8px);
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+  }
+
+  /* ── iOS Frosted Glass ── */
+  .ios-glass {
+    background: rgba(14, 23, 17, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .ios-glass-footer {
+    background: rgba(10, 15, 11, 0.88);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Realistic Playing Cards ── */
+  .card-slot {
+    perspective: 800px;
+  }
+  .card {
+    width: clamp(66px, 19vw, 84px);
+    height: clamp(94px, 27vw, 118px);
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, 'Times New Roman', serif;
+    box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.7), 0 4px 8px -2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .card-face {
+    background: linear-gradient(155deg, #ffffff 0%, #f4f4f5 55%, #e4e4e7 100%);
+  }
+  .card-face.red { color: #dc2626; }
+  .card-face.black { color: #18181b; }
+
+  .card .corner {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    font-weight: 800;
+  }
+  .card .corner .val { font-size: clamp(14px, 4vw, 17px); font-family: -apple-system, system-ui, sans-serif; }
+  .card .corner .sml { font-size: clamp(10px, 3vw, 13px); margin-top: 1px; }
+  .card .corner.tl { top: 6px; left: 7px; }
+  .card .corner.br { bottom: 6px; right: 7px; transform: rotate(180deg); }
+  .card .center-pip { font-size: clamp(32px, 9vw, 42px); line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
+
+  .card-back {
+    background: radial-gradient(circle at 50% 50%, #1e3a5f 0%, #0f1f33 100%);
+    border: 3px solid #ffffff;
+    box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 0, 0, 0.6);
+  }
+  .card-back-pattern {
+    width: 82%;
+    height: 86%;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 3px, transparent 3px, transparent 6px),
+                      repeating-linear-gradient(-45deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 3px, transparent 3px, transparent 6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-back-pattern::after {
+    content: '♠';
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  /* ── iPhone Touch Buttons ── */
+  .ios-btn {
+    position: relative;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s cubic-bezier(0.2, 0.9, 0.4, 1), opacity 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .ios-btn:active {
+    transform: scale(0.94);
+    opacity: 0.9;
+  }
+  .ios-btn:disabled {
+    opacity: 0.35 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    pointer-events: none;
+  }
+
+  /* Button Colorways */
+  .btn-hit {
+    background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
+    color: #ffffff;
+    border-bottom: 2px solid #14532d;
+  }
+  .btn-stand {
+    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    color: #ffffff;
+    border-bottom: 2px solid #7f1d1d;
+  }
+  .btn-double {
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    border-bottom: 2px solid #1e3a8a;
+  }
+  .btn-split {
+    background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+    color: #ffffff;
+    border-bottom: 2px solid #78350f;
+  }
+  .btn-surrender {
+    background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
+    color: #ffffff;
+    border-bottom: 2px solid #4c1d95;
+  }
+
+  /* ── Tab Bar (iOS style) ── */
+  .tab-bar {
+    display: flex;
+    padding-bottom: max(var(--sab), 14px);
+    flex-shrink: 0;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 7px 0 2px;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: color 0.15s, transform 0.1s;
+  }
+  .tab-item:active {
+    transform: scale(0.92);
+  }
+  .tab-item.active {
+    color: #10b981;
+  }
+  .tab-item .icon {
+    font-size: 21px;
+    line-height: 1;
+  }
+
+  /* ── Segmented Control (iOS style) ── */
+  .ios-segmented {
+    background: rgba(31, 41, 55, 0.7);
+    border-radius: 12px;
+    padding: 3px;
+    display: flex;
+    gap: 2px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .ios-seg-btn {
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ios-seg-btn.active {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  }
+
+  /* ── Matrix Table (Optimized for iPhone touch) ── */
+  .mx-scroll-area {
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .mx-cell {
+    width: 29px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.08s, filter 0.1s;
+    user-select: none;
+  }
+  .mx-cell:active {
+    transform: scale(1.35);
+    z-index: 20;
+    filter: brightness(1.2);
+  }
+  .mx-hdr-cell {
+    width: 29px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+  .mx-row-lbl {
+    width: 38px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #e5e7eb;
+    flex-shrink: 0;
+  }
+
+  /* Strategy Matrix Color Codes */
+  .c-H { background: #15803d; color: #dcfce7; }
+  .c-S { background: #b91c1c; color: #fee2e2; }
+  .c-D, .c-Dh, .c-Ds { background: #1d4ed8; color: #dbeafe; }
+  .c-P { background: #b45309; color: #fef3c7; }
+  .c-R, .c-Rh, .c-Rs, .c-Rp { background: #6d28d9; color: #f3e8ff; }
+
+  /* ── Timer Progress Line ── */
+  .timer-track {
+    height: 3.5px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    border-radius: 2px;
+    width: 100%;
+    background: #10b981;
+    transition: width 0.07s linear, background-color 0.2s;
+  }
+
+  /* ── iOS Toggle Switch ── */
+  .ios-switch {
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: #374151;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.25s;
+    flex-shrink: 0;
+  }
+  .ios-switch.on { background: #10b981; }
+  .ios-switch-knob {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ffffff;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    transition: transform 0.25s cubic-bezier(0.2, 0.85, 0.32, 1.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.35);
+  }
+  .ios-switch.on .ios-switch-knob {
+    transform: translateX(-18px);
+  }
+
+  /* ── Animations ── */
+  @keyframes cardSlide {
+    0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .anim-card-1 { animation: cardSlide 0.25s cubic-bezier(0.17, 0.89, 0.32, 1.15) both; }
+  .anim-card-2 { animation: cardSlide 0.25s cubic-bezier(0.17, 0.89, 0.32, 1.15) 0.06s both; }
+  .anim-card-3 { animation: cardSlide 0.25s cubic-bezier(0.17, 0.89, 0.32, 1.15) 0.12s both; }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.9; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+  .pulse-streak { animation: pulseGlow 1.2s infinite ease-in-out; }
+
+  /* ── Modal Bottom Sheet on iOS ── */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 90;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .sheet-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .sheet-modal {
+    background: #141b16;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px 24px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 24px calc(max(var(--sab), 16px) + 16px);
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+  }
+  .sheet-backdrop.active .sheet-modal {
+    transform: translateY(0);
+  }
+  .sheet-grabber {
+    width: 40px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    margin: 0 auto 16px;
+  }
+
+  /* ── Custom Scrollbar for iOS ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<div id="app-root">
+
+  <!-- ═══════════ HEADER: iOS STATUS & CONTROLS ═══════════ -->
+  <header class="ios-glass flex items-center justify-between px-4 py-2 flex-shrink-0 z-30">
+    <!-- Streak -->
+    <div class="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-emerald-500/20">
+      <span id="streak-icon" class="text-base">🎯</span>
+      <div class="flex flex-col leading-none">
+        <span class="text-[9px] text-gray-400 font-medium">רצף</span>
+        <span id="streak-num" class="text-sm font-extrabold text-emerald-400">0</span>
+      </div>
+    </div>
+
+    <!-- Accuracy & Score -->
+    <div class="flex items-center gap-2">
+      <div class="flex flex-col items-center">
+        <div class="flex items-baseline gap-1">
+          <span id="accuracy-pct" class="text-base font-black text-white">0%</span>
+          <span class="text-[10px] text-gray-400">דיוק</span>
+        </div>
+        <span id="total-count" class="text-[10px] text-gray-500 font-semibold font-mono">0 / 0</span>
+      </div>
+    </div>
+
+    <!-- Settings: Audio & 3s Casino Timer -->
+    <div class="flex items-center gap-3">
+      <!-- Mute/Sound Toggle -->
+      <button id="sound-btn" onclick="toggleSound()" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm" aria-label="Toggle Sound">
+        <span id="sound-icon">🔊</span>
+      </button>
+
+      <!-- Timer Toggle -->
+      <div class="flex items-center gap-1.5" onclick="toggleTimer()">
+        <span class="text-xs">⏱️</span>
+        <div id="timer-toggle" class="ios-switch">
+          <div class="ios-switch-knob"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════ MAIN VIEW CONTAINER ═══════════ -->
+  <main class="flex-1 relative overflow-hidden">
+
+    <!-- ───────────────────────────────────────── -->
+    <!-- 1. DRILL MODE (מאמן מהיר)                 -->
+    <!-- ───────────────────────────────────────── -->
+    <section id="view-drill" class="absolute inset-0 flex flex-col justify-between overflow-hidden">
+      
+      <!-- Top Timer bar -->
+      <div id="timer-bar-wrap" class="timer-track mx-4 mt-1 opacity-0 transition-opacity duration-200">
+        <div id="timer-fill" class="timer-fill"></div>
+      </div>
+
+      <!-- Table Felt Area: Cards & Hand Info -->
+      <div class="flex-1 flex flex-col items-center justify-around px-4 py-1 min-h-0">
+        
+        <!-- Dealer Section -->
+        <div class="flex flex-col items-center">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span class="text-[11px] font-bold tracking-wider text-gray-400 uppercase">קלף הדילר</span>
+          </div>
+          <div class="flex gap-3 items-center justify-center">
+            <!-- Hole Card (Hidden) -->
+            <div id="dealer-hole" class="card card-back anim-card-1">
+              <div class="card-back-pattern"></div>
+            </div>
+            <!-- Face-up Card -->
+            <div id="dealer-up" class="card-slot"></div>
+          </div>
+        </div>
+
+        <!-- Subtle Divider / Mode Badge -->
+        <div class="flex items-center gap-2">
+          <div class="h-[1px] w-12 bg-white/10"></div>
+          <div id="mode-badge" class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 font-bold tracking-widest uppercase">
+            VS
+          </div>
+          <div class="h-[1px] w-12 bg-white/10"></div>
+        </div>
+
+        <!-- Player Section -->
+        <div class="flex flex-col items-center">
+          <div id="player-cards" class="flex gap-3 items-center justify-center"></div>
+          <div class="mt-2 flex items-center gap-2">
+            <div id="hand-label" class="px-3.5 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-300 font-black text-xs tracking-wide shadow-sm">
+              סכום --
+            </div>
+          </div>
+        </div>
+
+        <!-- Instant Feedback Toast -->
+        <div id="feedback-box" class="w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-0 transform translate-y-1">
+          <div id="fb-title" class="text-xs font-black"></div>
+          <div id="fb-desc" class="text-[11px] leading-tight opacity-90 mt-0.5 font-medium"></div>
+        </div>
+
+      </div>
+
+      <!-- ── iPhone Action Keypad (Ergonomic 2-Row Thumb Layout) ── -->
+      <div class="px-3 pb-3 pt-1 flex-shrink-0 flex flex-col gap-2 max-w-lg mx-auto w-full">
+        
+        <!-- Row 1: The two big primary buttons (Hit & Stand) -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- HIT -->
+          <button id="btn-h" class="ios-btn btn-hit py-3.5" onclick="handleChoice('H')">
+            <div class="flex items-center gap-1.5">
+              <span class="text-lg">👆</span>
+              <span class="text-base font-black tracking-wide">HIT</span>
+            </div>
+            <span class="text-[10px] font-bold opacity-80">קח קלף</span>
+          </button>
+
+          <!-- STAND -->
+          <button id="btn-s" class="ios-btn btn-stand py-3.5" onclick="handleChoice('S')">
+            <div class="flex items-center gap-1.5">
+              <span class="text-lg">✋</span>
+              <span class="text-base font-black tracking-wide">STAND</span>
+            </div>
+            <span class="text-[10px] font-bold opacity-80">עמוד</span>
+          </button>
+        </div>
+
+        <!-- Row 2: Secondary buttons (Double, Split, Surrender) -->
+        <div class="grid grid-cols-3 gap-2">
+          <!-- DOUBLE -->
+          <button id="btn-d" class="ios-btn btn-double py-2.5" onclick="handleChoice('D')">
+            <div class="flex items-center gap-1">
+              <span class="text-sm">⚡</span>
+              <span class="text-xs font-black tracking-wide">DOUBLE</span>
+            </div>
+            <span class="text-[9px] font-bold opacity-85">הכפל 2x</span>
+          </button>
+
+          <!-- SPLIT -->
+          <button id="btn-p" class="ios-btn btn-split py-2.5" onclick="handleChoice('P')">
+            <div class="flex items-center gap-1">
+              <span class="text-sm">✌️</span>
+              <span class="text-xs font-black tracking-wide">SPLIT</span>
+            </div>
+            <span class="text-[9px] font-bold opacity-85">פצל זוג</span>
+          </button>
+
+          <!-- SURRENDER -->
+          <button id="btn-r" class="ios-btn btn-surrender py-2.5" onclick="handleChoice('R')">
+            <div class="flex items-center gap-1">
+              <span class="text-sm">🏳️</span>
+              <span class="text-xs font-black tracking-wide">SURRENDER</span>
+            </div>
+            <span class="text-[9px] font-bold opacity-85">ויתור</span>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ───────────────────────────────────────── -->
+    <!-- 2. MATRIX VIEW (הטבלה המלאה)               -->
+    <!-- ───────────────────────────────────────── -->
+    <section id="view-matrix" class="absolute inset-0 hidden flex-col">
+      <!-- Sub-Tabs (iOS Segmented Control) -->
+      <div class="px-4 py-2.5 flex-shrink-0">
+        <div class="ios-segmented">
+          <button class="ios-seg-btn active" onclick="setMatrixCategory('hard', this)">Hard</button>
+          <button class="ios-seg-btn" onclick="setMatrixCategory('soft', this)">Soft</button>
+          <button class="ios-seg-btn" onclick="setMatrixCategory('pair', this)">Pairs</button>
+        </div>
+      </div>
+
+      <!-- Color Legend -->
+      <div class="flex items-center justify-around px-4 py-1.5 text-[10px] font-bold text-gray-400 bg-white/5 border-y border-white/5 flex-shrink-0">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded c-H inline-block text-[9px] leading-3 text-center">H</span>Hit</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded c-S inline-block text-[9px] leading-3 text-center">S</span>Stand</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded c-D inline-block text-[9px] leading-3 text-center">D</span>Double</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded c-P inline-block text-[9px] leading-3 text-center">P</span>Split</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded c-R inline-block text-[9px] leading-3 text-center">R</span>Surrender</span>
+      </div>
+
+      <!-- Matrix Interactive Grid -->
+      <div class="flex-1 mx-scroll-area px-2 py-3">
+        <div id="matrix-container" class="flex flex-col items-center"></div>
+      </div>
+      
+      <!-- Footer Note -->
+      <div class="p-2 text-center text-[10px] text-gray-500 flex-shrink-0 border-t border-white/5">
+        חוקי שולחן: 4-8 חפיסות | דילר עומד בסופט 17 (S17) | הכפלה אחרי פיצול (DAS)
+      </div>
+    </section>
+
+    <!-- ───────────────────────────────────────── -->
+    <!-- 3. WEAK SPOTS VIEW (נקודות תורפה)         -->
+    <!-- ───────────────────────────────────────── -->
+    <section id="view-weak" class="absolute inset-0 hidden flex-col">
+      <div class="flex-1 overflow-y-auto px-4 pt-3 pb-3">
+        
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h2 class="text-base font-black text-white">⚡ ניתוח נקודות תורפה</h2>
+            <p class="text-[11px] text-gray-400">הידיים שבהן ביצעת הכי הרבה שגיאות</p>
+          </div>
+          <button onclick="clearWeakSpots()" class="px-2.5 py-1 rounded-lg bg-red-900/30 border border-red-500/20 text-red-300 text-[11px] font-bold">
+            איפוס נתונים
+          </button>
+        </div>
+
+        <div id="weak-list" class="space-y-2 mt-3"></div>
+
+        <div id="weak-empty" class="hidden flex-col items-center justify-center py-16 text-center">
+          <div class="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl mb-3">
+            🏆
+          </div>
+          <div class="text-sm font-bold text-gray-200">אין טעויות שמורות!</div>
+          <div class="text-xs text-gray-500 mt-1 max-w-[200px]">המשך לתרגל במאמן המהיר כדי לזהות נקודות לשיפור.</div>
+        </div>
+
+      </div>
+
+      <!-- Sticky Action Bar for Weak Mode -->
+      <div class="p-3 ios-glass flex-shrink-0">
+        <button id="btn-weak-practice" onclick="launchWeakPractice()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/60 active:scale-[0.98] transition-transform">
+          <span>🎯</span>
+          <span>תרגל רק את הטעויות שלי</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════ BOTTOM TAB BAR (iOS Style) ═══════════ -->
+  <nav class="tab-bar ios-glass-footer z-30">
+    <button class="tab-item active" onclick="navigateTab('drill', this)">
+      <span class="icon">🎯</span>
+      <span>מאמן מהיר</span>
+    </button>
+    <button class="tab-item" onclick="navigateTab('matrix', this)">
+      <span class="icon">📊</span>
+      <span>הטבלה</span>
+    </button>
+    <button class="tab-item" onclick="navigateTab('weak', this)">
+      <span class="icon">⚡</span>
+      <span>תורפה</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ═══════════ iOS BOTTOM SHEET (Cell Details) ═══════════ -->
+<div id="detail-sheet" class="sheet-backdrop" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet-modal">
+    <div class="sheet-grabber"></div>
+    <div id="sheet-body" class="text-center"></div>
+    <button onclick="closeSheet()" class="w-full mt-5 py-3 rounded-xl bg-white/10 active:bg-white/15 text-white font-bold text-sm">
+      הבנתי, סגור
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════ LOGIC & GAME ENGINE ═══════════ -->
+<script>
+// ─────────────────────────────────────────────
+// 1. BASIC STRATEGY MATRIX (4-8 Deck, S17, DAS, LS)
+// ─────────────────────────────────────────────
+// Dealer up-card index order: [2, 3, 4, 5, 6, 7, 8, 9, 10, A]
+const HARD_STRATEGY = {
+  5 :['H','H','H','H','H','H','H','H','H','H'],
+  6 :['H','H','H','H','H','H','H','H','H','H'],
+  7 :['H','H','H','H','H','H','H','H','H','H'],
+  8 :['H','H','H','H','H','H','H','H','H','H'],
+  9 :['H','Dh','Dh','Dh','Dh','H','H','H','H','H'],
+  10:['Dh','Dh','Dh','Dh','Dh','Dh','Dh','Dh','H','H'],
+  11:['Dh','Dh','Dh','Dh','Dh','Dh','Dh','Dh','Dh','Dh'],
+  12:['H','H','S','S','S','H','H','H','H','H'],
+  13:['S','S','S','S','S','H','H','H','H','H'],
+  14:['S','S','S','S','S','H','H','H','H','H'],
+  15:['S','S','S','S','S','H','H','H','Rh','H'],
+  16:['S','S','S','S','S','H','H','Rh','Rh','Rh'],
+  17:['S','S','S','S','S','S','S','S','S','Rs'],
+  18:['S','S','S','S','S','S','S','S','S','S'],
+  19:['S','S','S','S','S','S','S','S','S','S'],
+  20:['S','S','S','S','S','S','S','S','S','S']
+};
+
+const SOFT_STRATEGY = {
+  13:['H','H','H','Dh','Dh','H','H','H','H','H'],
+  14:['H','H','H','Dh','Dh','H','H','H','H','H'],
+  15:['H','H','Dh','Dh','Dh','H','H','H','H','H'],
+  16:['H','H','Dh','Dh','Dh','H','H','H','H','H'],
+  17:['H','Dh','Dh','Dh','Dh','H','H','H','H','H'],
+  18:['Ds','Ds','Ds','Ds','Ds','S','S','H','H','H'],
+  19:['S','S','S','S','S','S','S','S','S','S'],
+  20:['S','S','S','S','S','S','S','S','S','S']
+};
+
+const PAIR_STRATEGY = {
+  2 :['P','P','P','P','P','P','H','H','H','H'],
+  3 :['P','P','P','P','P','P','H','H','H','H'],
+  4 :['H','H','H','P','P','H','H','H','H','H'],
+  5 :['Dh','Dh','Dh','Dh','Dh','Dh','Dh','Dh','H','H'],
+  6 :['P','P','P','P','P','H','H','H','H','H'],
+  7 :['P','P','P','P','P','P','H','H','H','H'],
+  8 :['P','P','P','P','P','P','P','P','P','Rp'],
+  9 :['P','P','P','P','P','S','P','P','S','S'],
+  10:['S','S','S','S','S','S','S','S','S','S'],
+  11:['P','P','P','P','P','P','P','P','P','P']
+};
+
+// Map granular strategy code to 5 primary action buttons
+function getPrimaryAction(code) {
+  if (code === 'H') return 'H';
+  if (code === 'S') return 'S';
+  if (code === 'Dh' || code === 'Ds') return 'D';
+  if (code === 'P') return 'P';
+  return 'R'; // Rh, Rs, Rp -> Surrender
+}
+
+function getDealerColIndex(val) {
+  return val === 11 ? 9 : val - 2;
+}
+
+function formatCardValue(v) {
+  if (v === 11) return 'A';
+  if (v === 10) return '10';
+  return String(v);
+}
+
+// ─────────────────────────────────────────────
+// 2. SYNTHESIZED WEB AUDIO (Haptic Touch & Sfx)
+// ─────────────────────────────────────────────
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playTapSound() {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const now = audioCtx.currentTime;
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.025);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.025);
+  } catch (e) {}
+}
+
+function playSuccessSound() {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    // Harmonic bell chord
+    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+
+      gain.gain.setValueAtTime(0.18, now + idx * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now + idx * 0.04);
+      osc.stop(now + 0.25);
+    });
+  } catch (e) {}
+}
+
+function playMistakeSound() {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.exponentialRampToValueAtTime(65, now + 0.2);
+
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.25);
+  } catch (e) {}
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+  if (soundEnabled) playTapSound();
+}
+
+// ─────────────────────────────────────────────
+// 3. STATE & DATA REPOSITORY
+// ─────────────────────────────────────────────
+const STORAGE_KEYS = {
+  STATS: 'bj_iphone_stats_v2',
+  WEAK: 'bj_iphone_weak_v2'
+};
+
+const STATE = {
+  currentHand: {
+    playerCards: [],
+    dealerCard: null,
+    handType: 'hard', // 'hard', 'soft', 'pair'
+    handKey: 12,
+    rawStrategy: 'H',
+    correctAction: 'H'
+  },
+  answered: false,
+  stats: {
+    correct: 0,
+    total: 0,
+    streak: 0,
+    bestStreak: 0
+  },
+  timerActive: false,
+  timerInterval: null,
+  timerDuration: 3000,
+  timerStart: 0,
+  drillMode: 'normal', // 'normal' | 'weak'
+  weakPracticeQueue: [],
+  matrixTab: 'hard'
+};
+
+function loadStorage() {
+  try {
+    const savedStats = JSON.parse(localStorage.getItem(STORAGE_KEYS.STATS));
+    if (savedStats) STATE.stats = Object.assign(STATE.stats, savedStats);
+  } catch(e) {}
+}
+
+function saveStats() {
+  localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(STATE.stats));
+}
+
+function loadWeakSpots() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.WEAK)) || {};
+  } catch(e) {
+    return {};
+  }
+}
+
+function saveWeakSpots(obj) {
+  localStorage.setItem(STORAGE_KEYS.WEAK, JSON.stringify(obj));
+}
+
+// ─────────────────────────────────────────────
+// 4. CARD GENERATION & DEALING
+// ─────────────────────────────────────────────
+const SUITS = ['♠', '♥', '♦', '♣'];
+const FACES_10 = ['10', 'J', 'Q', 'K'];
+
+function createCard(val) {
+  const suit = SUITS[Math.floor(Math.random() * 4)];
+  let display;
+  if (val === 11) display = 'A';
+  else if (val === 10) display = FACES_10[Math.floor(Math.random() * 4)];
+  else display = String(val);
+
+  return { val, display, suit, isRed: suit === '♥' || suit === '♦' };
+}
+
+function renderCardMarkup(card, animClass = '') {
+  const colClass = card.isRed ? 'red' : 'black';
+  return `
+    <div class="card card-face ${colClass} ${animClass}">
+      <span class="corner tl">
+        <span class="val">${card.display}</span>
+        <span class="sml">${card.suit}</span>
+      </span>
+      <span class="center-pip">${card.suit}</span>
+      <span class="corner br">
+        <span class="val">${card.display}</span>
+        <span class="sml">${card.suit}</span>
+      </span>
+    </div>
+  `;
+}
+
+function pickRandomDealer() {
+  const dealerOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  return dealerOptions[Math.floor(Math.random() * dealerOptions.length)];
+}
+
+function generateNewHand() {
+  // If in Weak Practice Mode, take from weak queue
+  if (STATE.drillMode === 'weak' && STATE.weakPracticeQueue.length > 0) {
+    const item = STATE.weakPracticeQueue[Math.floor(Math.random() * STATE.weakPracticeQueue.length)];
+    buildSpecificHand(item.type, item.key, item.dealer);
+    return;
+  }
+
+  // Distribution weights: ~40% Hard, ~30% Soft, ~30% Pairs
+  const roll = Math.random();
+  if (roll < 0.40) {
+    dealHardHand();
+  } else if (roll < 0.70) {
+    dealSoftHand();
+  } else {
+    dealPairHand();
+  }
+}
+
+function dealHardHand() {
+  // Frequently drill 8 to 17 (the pivotal decision hands)
+  const hardPool = [
+    5, 6, 7, 8, 9, 9, 10, 10, 11, 11,
+    12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 18, 19, 20
+  ];
+  const targetTotal = hardPool[Math.floor(Math.random() * hardPool.length)];
+
+  // Find two non-equal cards that sum to targetTotal
+  const validCombos = [];
+  for (let c1 = 2; c1 <= Math.min(targetTotal - 2, 10); c1++) {
+    const c2 = targetTotal - c1;
+    if (c2 >= 2 && c2 <= 10 && c1 !== c2) {
+      validCombos.push([c1, c2]);
+    }
+  }
+
+  if (validCombos.length === 0) {
+    dealHardHand();
+    return;
+  }
+
+  const [c1, c2] = validCombos[Math.floor(Math.random() * validCombos.length)];
+  const dealerVal = pickRandomDealer();
+
+  setHandState('hard', targetTotal, [createCard(c1), createCard(c2)], createCard(dealerVal));
+}
+
+function dealSoftHand() {
+  // A,2 through A,9 (13 through 20)
+  const nonAces = [2, 3, 4, 5, 6, 7, 8, 9];
+  const secondVal = nonAces[Math.floor(Math.random() * nonAces.length)];
+  const targetTotal = 11 + secondVal;
+  const dealerVal = pickRandomDealer();
+
+  setHandState('soft', targetTotal, [createCard(11), createCard(secondVal)], createCard(dealerVal));
+}
+
+function dealPairHand() {
+  // 2,2 through A,A
+  const pairValues = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const pairVal = pairValues[Math.floor(Math.random() * pairValues.length)];
+
+  const card1 = createCard(pairVal);
+  const card2 = createCard(pairVal);
+  // Ensure distinct suits
+  while (card2.suit === card1.suit) {
+    card2.suit = SUITS[Math.floor(Math.random() * 4)];
+    card2.isRed = card2.suit === '♥' || card2.suit === '♦';
+  }
+
+  const dealerVal = pickRandomDealer();
+  setHandState('pair', pairVal, [card1, card2], createCard(dealerVal));
+}
+
+function buildSpecificHand(type, key, dealerVal) {
+  if (type === 'pair') {
+    const c1 = createCard(key);
+    const c2 = createCard(key);
+    while (c2.suit === c1.suit) {
+      c2.suit = SUITS[Math.floor(Math.random() * 4)];
+      c2.isRed = c2.suit === '♥' || c2.suit === '♦';
+    }
+    setHandState('pair', key, [c1, c2], createCard(dealerVal));
+  } else if (type === 'soft') {
+    setHandState('soft', key, [createCard(11), createCard(key - 11)], createCard(dealerVal));
+  } else {
+    // Hard
+    const validCombos = [];
+    for (let c1 = 2; c1 <= Math.min(key - 2, 10); c1++) {
+      const c2 = key - c1;
+      if (c2 >= 2 && c2 <= 10 && c1 !== c2) validCombos.push([c1, c2]);
+    }
+    if (validCombos.length === 0) {
+      generateNewHand();
+      return;
+    }
+    const [c1, c2] = validCombos[Math.floor(Math.random() * validCombos.length)];
+    setHandState('hard', key, [createCard(c1), createCard(c2)], createCard(dealerVal));
+  }
+}
+
+function setHandState(type, key, playerCards, dealerCard) {
+  const dIdx = getDealerColIndex(dealerCard.val);
+  const table = type === 'hard' ? HARD_STRATEGY : type === 'soft' ? SOFT_STRATEGY : PAIR_STRATEGY;
+  const rawCode = table[key][dIdx];
+
+  STATE.currentHand = {
+    playerCards,
+    dealerCard,
+    handType: type,
+    handKey: key,
+    rawStrategy: rawCode,
+    correctAction: getPrimaryAction(rawCode)
+  };
+  STATE.answered = false;
+
+  renderDrillUI();
+  restartTimerIfActive();
+}
+
+// ─────────────────────────────────────────────
+// 5. STRATEGY EXPLANATION ENGINE
+// ─────────────────────────────────────────────
+function generateExplanation(handType, key, dealerCardVal, correctAction, rawCode) {
+  const dStr = formatCardValue(dealerCardVal);
+  const fallbacks = { Dh: 'קח קלף (Hit)', Ds: 'עמוד (Stand)', Rh: 'קח קלף (Hit)', Rs: 'עמוד (Stand)', Rp: 'פצל (Split)' };
+  const fallbackNote = fallbacks[rawCode] ? ` [אם אסור להכפיל/לוותר: ${fallbacks[rawCode]}]` : '';
+
+  if (handType === 'pair') {
+    const pStr = formatCardValue(key);
+    if (key === 11) return `תמיד פצל אסים (A,A) — מעניק שתי הזדמנויות לנצח עם 21!`;
+    if (key === 8) {
+      if (rawCode === 'Rp') return `מול דילר ${dStr}, ויתור (Surrender) עדיף אם זמין, אחרת פצל 8,8.`;
+      return `תמיד פצל 8,8 — סכום 16 הוא הגרוע ביותר בבלאק ג'ק, פיצול משפר משמעותית.`;
+    }
+    if (key === 10) return `לעולם אל תפצל 10,10! סכום 20 זו אחת הידיים החזקות במשחק.`;
+    if (key === 5) return `לעולם אל תפצל 5,5 — התייחס כסכום 10 קשיח והכפל (Double)!${fallbackNote}`;
+    if (correctAction === 'P') return `פיצול ${pStr},${pStr} מול דילר חלש (${dStr}) מייצר שתי ידיים ביתרון.`;
+    if (correctAction === 'S') return `עמוד עם זוג ${pStr},${pStr} — מול ${dStr} עדיף להגן על היד.`;
+    return `הדילר חזק מדי (${dStr}) כדי לפצל ${pStr},${pStr} — קח קלף (Hit).`;
+  }
+
+  if (handType === 'soft') {
+    const otherVal = key - 11;
+    if (correctAction === 'D') return `יד רכה A,${otherVal} — אין סיכון לפסול. הכפל (Double) נגד דילר חלש ${dStr}!${fallbackNote}`;
+    if (correctAction === 'S') {
+      if (key >= 19) return `סופט ${key} (A,${otherVal}) — יד מנצחת חזקה מאוד, עמוד תמיד!`;
+      return `סופט 18 (A,7) — מספיק טוב מול דילר ${dStr}, שמור על היד ועמוד.`;
+    }
+    if (correctAction === 'H') {
+      if (key === 18) return `סופט 18 מול דילר חזק (${dStr}) מפסיד לרוב. חייבים לקחת קלף (Hit) כדי לשפר!`;
+      return `סופט ${key} (A,${otherVal}) — יד רכה שאינה בסכנת פסילה. קח קלף לשפר.`;
+    }
+  }
+
+  // Hard hands
+  if (correctAction === 'R') return `סכום ${key} מול דילר ${dStr} הוא עמדת נחיתות קיצונית — ויתור (Surrender) מקטין הפסד!${fallbackNote}`;
+  if (correctAction === 'D') {
+    if (key === 11) return `סכום 11 — המצב האידיאלי להכפלה! סיכוי גבוה ביותר ל-21.${fallbackNote}`;
+    if (key === 10) return `סכום 10 מול דילר ${dStr} — הכפל (Double) לסיכוי ל-20.${fallbackNote}`;
+    return `סכום 9 מול דילר עם קלף פריצה (${dStr}) — הכפל (Double).${fallbackNote}`;
+  }
+  if (correctAction === 'S') {
+    if (key >= 17) return `סכום ${key} קשיח — עמוד תמיד, הסיכון לפסול (Bust) גבוה מדי.`;
+    return `הדילר בעמדת פריצה חלשה (${dStr}). עמוד (${key}) ותן לו להסתכן בפסילה.`;
+  }
+  // Hit
+  if (key <= 8) return `סכום נמוך (${key}) — אין כל סיכון לפסילה, קח קלף (Hit) תמיד.`;
+  if (key === 12 && (dealerCardVal <= 3 || dealerCardVal >= 7)) return `סכום 12 מול ${dStr} — עדיף לקחת קלף, רק 4 קלפים פוסלים אותך.`;
+  return `דילר חזק מראה ${dStr} — עם סכום ${key} חייבים לקחת סיכון ולקחת קלף.`;
+}
+
+// ─────────────────────────────────────────────
+// 6. UI RENDERING & USER INTERACTIONS
+// ─────────────────────────────────────────────
+function renderDrillUI() {
+  const { currentHand } = STATE;
+
+  // Dealer Up Card
+  document.getElementById('dealer-up').innerHTML = renderCardMarkup(currentHand.dealerCard, 'anim-card-2');
+  
+  // Animate Dealer Hole Card
+  const hole = document.getElementById('dealer-hole');
+  hole.classList.remove('anim-card-1');
+  void hole.offsetWidth;
+  hole.classList.add('anim-card-1');
+
+  // Player Cards
+  const playerCardsEl = document.getElementById('player-cards');
+  playerCardsEl.innerHTML = currentHand.playerCards
+    .map((c, i) => renderCardMarkup(c, i === 0 ? 'anim-card-2' : 'anim-card-3'))
+    .join('');
+
+  // Hand Description Label
+  let labelText = '';
+  if (currentHand.handType === 'pair') {
+    const pStr = formatCardValue(currentHand.handKey);
+    labelText = `זוג ${pStr},${pStr}`;
+  } else if (currentHand.handType === 'soft') {
+    labelText = `סופט ${currentHand.handKey} (A,${currentHand.handKey - 11})`;
+  } else {
+    labelText = `סכום קשיח ${currentHand.handKey}`;
+  }
+  document.getElementById('hand-label').textContent = labelText;
+
+  // Mode Badge indicator
+  const modeBadge = document.getElementById('mode-badge');
+  if (STATE.drillMode === 'weak') {
+    modeBadge.textContent = 'תרגול טעויות ⚡';
+    modeBadge.className = 'px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] text-amber-300 font-extrabold tracking-wider';
+  } else {
+    modeBadge.textContent = 'VS';
+    modeBadge.className = 'px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 font-bold tracking-widest uppercase';
+  }
+
+  // Hide Feedback Toast
+  const fbBox = document.getElementById('feedback-box');
+  fbBox.className = 'w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-0 transform translate-y-1';
+  document.getElementById('fb-title').textContent = '';
+  document.getElementById('fb-desc').textContent = '';
+
+  // Enable all keypad buttons
+  ['btn-h', 'btn-s', 'btn-d', 'btn-p', 'btn-r'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = false;
+  });
+}
+
+function updateHeaderStats() {
+  const { stats } = STATE;
+  document.getElementById('streak-num').textContent = stats.streak;
+  
+  // Dynamic streak icon
+  let streakIcon = '🎯';
+  if (stats.streak >= 25) streakIcon = '👑';
+  else if (stats.streak >= 15) streakIcon = '⚡';
+  else if (stats.streak >= 7) streakIcon = '🔥';
+  else if (stats.streak >= 3) streakIcon = '⭐';
+  document.getElementById('streak-icon').textContent = streakIcon;
+
+  // Accuracy calculation
+  const pct = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+  document.getElementById('accuracy-pct').textContent = `${pct}%`;
+  document.getElementById('total-count').textContent = `${stats.correct} / ${stats.total}`;
+
+  // Pulse effect on high streak
+  const streakNumEl = document.getElementById('streak-num');
+  if (stats.streak >= 5) {
+    streakNumEl.classList.add('pulse-streak');
+  } else {
+    streakNumEl.classList.remove('pulse-streak');
+  }
+}
+
+// ─────────────────────────────────────────────
+// 7. ANSWER SUBMISSION & FEEDBACK
+// ─────────────────────────────────────────────
+function handleChoice(chosenAction) {
+  if (STATE.answered) return;
+  STATE.answered = true;
+  stopTimer();
+  playTapSound();
+
+  const isCorrect = (chosenAction === STATE.currentHand.correctAction);
+  const actionNames = { H: 'HIT (קח קלף)', S: 'STAND (עמוד)', D: 'DOUBLE (הכפל)', P: 'SPLIT (פצל)', R: 'SURRENDER (ויתור)' };
+
+  // Update Stats
+  STATE.stats.total++;
+  if (isCorrect) {
+    STATE.stats.correct++;
+    STATE.stats.streak++;
+    if (STATE.stats.streak > STATE.stats.bestStreak) {
+      STATE.stats.bestStreak = STATE.stats.streak;
+    }
+    playSuccessSound();
+  } else {
+    STATE.stats.streak = 0;
+    playMistakeSound();
+  }
+
+  saveStats();
+  updateHeaderStats();
+
+  // Record Weak Spot
+  const weakSpots = loadWeakSpots();
+  const spotId = `${STATE.currentHand.handType}_${STATE.currentHand.handKey}_${STATE.currentHand.dealerCard.val}`;
+  if (!weakSpots[spotId]) {
+    weakSpots[spotId] = {
+      type: STATE.currentHand.handType,
+      key: STATE.currentHand.handKey,
+      dealer: STATE.currentHand.dealerCard.val,
+      mistakes: 0,
+      attempts: 0
+    };
+  }
+  weakSpots[spotId].attempts++;
+  if (!isCorrect) weakSpots[spotId].mistakes++;
+  saveWeakSpots(weakSpots);
+
+  // Show Toast Feedback
+  const fbBox = document.getElementById('feedback-box');
+  const fbTitle = document.getElementById('fb-title');
+  const fbDesc = document.getElementById('fb-desc');
+
+  const explanation = generateExplanation(
+    STATE.currentHand.handType,
+    STATE.currentHand.handKey,
+    STATE.currentHand.dealerCard.val,
+    STATE.currentHand.correctAction,
+    STATE.currentHand.rawStrategy
+  );
+
+  if (isCorrect) {
+    fbBox.className = 'w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-100 transform translate-y-0 bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 shadow-lg shadow-emerald-950/50';
+    fbTitle.innerHTML = `<span class="text-sm">✅</span> החלטה מדויקת! ${actionNames[STATE.currentHand.correctAction]}`;
+    fbDesc.textContent = explanation;
+  } else {
+    fbBox.className = 'w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-100 transform translate-y-0 bg-red-950/85 border border-red-500/40 text-red-200 shadow-lg shadow-red-950/50';
+    const reasonTimeout = chosenAction === '_TIMEOUT' ? '(נגמר הזמן!) ' : '';
+    fbTitle.innerHTML = `<span class="text-sm">❌</span> ${reasonTimeout}המהלך הנכון: <strong>${actionNames[STATE.currentHand.correctAction]}</strong>`;
+    fbDesc.textContent = explanation;
+  }
+
+  // Disable keypad temporarily
+  ['btn-h', 'btn-s', 'btn-d', 'btn-p', 'btn-r'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = true;
+  });
+
+  // Next round delay
+  const nextDelay = isCorrect ? 950 : 2500;
+  setTimeout(() => {
+    generateNewHand();
+  }, nextDelay);
+}
+
+// ─────────────────────────────────────────────
+// 8. CASINO 3-SECOND TIMER
+// ─────────────────────────────────────────────
+function toggleTimer() {
+  STATE.timerActive = !STATE.timerActive;
+  playTapSound();
+  const toggleEl = document.getElementById('timer-toggle');
+  const barWrap = document.getElementById('timer-bar-wrap');
+
+  if (STATE.timerActive) {
+    toggleEl.classList.add('on');
+    barWrap.classList.remove('opacity-0');
+    if (!STATE.answered) startTimer();
+  } else {
+    toggleEl.classList.remove('on');
+    barWrap.classList.add('opacity-0');
+    stopTimer();
+  }
+}
+
+function startTimer() {
+  stopTimer();
+  if (!STATE.timerActive) return;
+
+  STATE.timerStart = Date.now();
+  const fill = document.getElementById('timer-fill');
+  fill.style.width = '100%';
+  fill.style.backgroundColor = '#10b981';
+
+  STATE.timerInterval = setInterval(() => {
+    const elapsed = Date.now() - STATE.timerStart;
+    const remainingRatio = Math.max(0, 1 - (elapsed / STATE.timerDuration));
+    const pct = remainingRatio * 100;
+
+    fill.style.width = `${pct}%`;
+    if (pct < 30) {
+      fill.style.backgroundColor = '#ef4444';
+    } else if (pct < 60) {
+      fill.style.backgroundColor = '#f59e0b';
+    } else {
+      fill.style.backgroundColor = '#10b981';
+    }
+
+    if (elapsed >= STATE.timerDuration) {
+      stopTimer();
+      if (!STATE.answered) {
+        handleChoice('_TIMEOUT');
+      }
+    }
+  }, 40);
+}
+
+function stopTimer() {
+  if (STATE.timerInterval) {
+    clearInterval(STATE.timerInterval);
+    STATE.timerInterval = null;
+  }
+}
+
+function restartTimerIfActive() {
+  if (STATE.timerActive) {
+    startTimer();
+  }
+}
+
+// ─────────────────────────────────────────────
+// 9. STRATEGY MATRIX (iOS Touch Optimized)
+// ─────────────────────────────────────────────
+function setMatrixCategory(cat, btn) {
+  playTapSound();
+  STATE.matrixTab = cat;
+  document.querySelectorAll('.ios-seg-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderMatrixGrid();
+}
+
+function renderMatrixGrid() {
+  const container = document.getElementById('matrix-container');
+  const cat = STATE.matrixTab;
+  const dealerCols = ['2','3','4','5','6','7','8','9','10','A'];
+  
+  let table, rows, rowLabels;
+  if (cat === 'hard') {
+    table = HARD_STRATEGY;
+    rows = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+    rowLabels = rows.map(r => String(r));
+  } else if (cat === 'soft') {
+    table = SOFT_STRATEGY;
+    rows = [13,14,15,16,17,18,19,20];
+    rowLabels = rows.map(r => `A,${r - 11}`);
+  } else {
+    table = PAIR_STRATEGY;
+    rows = [2,3,4,5,6,7,8,9,10,11];
+    rowLabels = rows.map(r => {
+      const v = r === 11 ? 'A' : String(r);
+      return `${v},${v}`;
+    });
+  }
+
+  let html = '<div class="inline-block bg-black/40 p-2 rounded-2xl border border-white/10">';
+  
+  // Dealer Header Row
+  html += '<div class="flex gap-[3px] mb-1.5 items-center">';
+  html += '<div class="mx-row-lbl text-[10px] text-gray-500 font-extrabold uppercase">דילר:</div>';
+  dealerCols.forEach(d => {
+    html += `<div class="mx-hdr-cell font-black text-gray-300">${d}</div>`;
+  });
+  html += '</div>';
+
+  // Rows
+  rows.forEach((rowKey, rIdx) => {
+    html += '<div class="flex gap-[3px] mb-[3px] items-center">';
+    html += `<div class="mx-row-lbl font-mono">${rowLabels[rIdx]}</div>`;
+    table[rowKey].forEach((code, cIdx) => {
+      const primaryAct = getPrimaryAction(code);
+      const displayChar = primaryAct === 'R' ? 'R' : primaryAct;
+      const dealerVal = cIdx === 9 ? 11 : cIdx + 2;
+
+      html += `<div class="mx-cell c-${primaryAct}" onclick="openCellDetails('${cat}', ${rowKey}, ${dealerVal}, '${code}')">${displayChar}</div>`;
+    });
+    html += '</div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function openCellDetails(category, key, dealerVal, rawCode) {
+  playTapSound();
+  const dStr = formatCardValue(dealerVal);
+  let handName = '';
+  if (category === 'hard') handName = `סכום קשיח ${key}`;
+  else if (category === 'soft') handName = `סופט ${key} (A,${key - 11})`;
+  else {
+    const pStr = formatCardValue(key);
+    handName = `זוג ${pStr},${pStr}`;
+  }
+
+  const primaryAct = getPrimaryAction(rawCode);
+  const actionFullNames = {
+    H: 'HIT — קח קלף',
+    S: 'STAND — עמוד',
+    D: 'DOUBLE — הכפל (אם אסור: קח קלף)',
+    Dh: 'DOUBLE — הכפל (אם אסור: קח קלף)',
+    Ds: 'DOUBLE — הכפל (אם אסור: עמוד)',
+    P: 'SPLIT — פצל זוג',
+    Rh: 'SURRENDER — ויתור (אם אסור: קח קלף)',
+    Rs: 'SURRENDER — ויתור (אם אסור: עמוד)',
+    Rp: 'SURRENDER — ויתור (אם אסור: פצל)'
+  };
+
+  const explanation = generateExplanation(category, key, dealerVal, primaryAct, rawCode);
+
+  const sheetBody = document.getElementById('sheet-body');
+  sheetBody.innerHTML = `
+    <div class="flex items-center justify-center gap-2 mb-3">
+      <span class="px-3 py-1 rounded-full bg-white/10 text-xs font-bold text-gray-300">${handName}</span>
+      <span class="text-gray-500 font-bold text-xs">מול</span>
+      <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">דילר ${dStr}</span>
+    </div>
+    <div class="inline-block px-5 py-2.5 rounded-2xl text-base font-black tracking-wide my-2 c-${primaryAct}">
+      ${actionFullNames[rawCode] || primaryAct}
+    </div>
+    <div class="mt-4 text-xs text-gray-300 leading-relaxed max-w-xs mx-auto text-right bg-white/5 p-3.5 rounded-xl border border-white/5">
+      ${explanation}
+    </div>
+  `;
+
+  document.getElementById('detail-sheet').classList.add('active');
+}
+
+function closeSheet() {
+  playTapSound();
+  document.getElementById('detail-sheet').classList.remove('active');
+}
+
+// ─────────────────────────────────────────────
+// 10. WEAK SPOTS (טבלת טעויות ותרגול ממוקד)
+// ─────────────────────────────────────────────
+function renderWeakSpotsList() {
+  const weakSpots = loadWeakSpots();
+  const listEl = document.getElementById('weak-list');
+  const emptyEl = document.getElementById('weak-empty');
+  const practiceBtn = document.getElementById('btn-weak-practice');
+
+  const entries = Object.entries(weakSpots)
+    .filter(([_, data]) => data.mistakes > 0)
+    .sort((a, b) => {
+      // Sort by mistake count and failure rate
+      const rateA = a[1].mistakes / a[1].attempts;
+      const rateB = b[1].mistakes / b[1].attempts;
+      return (b[1].mistakes * 2 + rateB * 10) - (a[1].mistakes * 2 + rateA * 10);
+    });
+
+  if (entries.length === 0) {
+    listEl.innerHTML = '';
+    emptyEl.classList.remove('hidden');
+    emptyEl.classList.add('flex');
+    practiceBtn.disabled = true;
+    practiceBtn.classList.add('opacity-40');
+    return;
+  }
+
+  emptyEl.classList.add('hidden');
+  emptyEl.classList.remove('flex');
+  practiceBtn.disabled = false;
+  practiceBtn.classList.remove('opacity-40');
+
+  const actionNames = { H: 'Hit', S: 'Stand', D: 'Double', P: 'Split', R: 'Surrender' };
+
+  let html = '';
+  entries.slice(0, 15).forEach(([_, item]) => {
+    const { type, key, dealer, mistakes, attempts } = item;
+    const successRate = Math.round(((attempts - mistakes) / attempts) * 100);
+    const dStr = formatCardValue(dealer);
+
+    let handTitle = '';
+    if (type === 'hard') handTitle = `סכום ${key}`;
+    else if (type === 'soft') handTitle = `A,${key - 11}`;
+    else {
+      const pStr = formatCardValue(key);
+      handTitle = `זוג ${pStr},${pStr}`;
+    }
+
+    const table = type === 'hard' ? HARD_STRATEGY : type === 'soft' ? SOFT_STRATEGY : PAIR_STRATEGY;
+    const rawCode = table[key][getDealerColIndex(dealer)];
+    const correctAct = actionNames[getPrimaryAction(rawCode)];
+
+    const barColor = successRate >= 70 ? 'bg-emerald-500' : successRate >= 40 ? 'bg-amber-500' : 'bg-red-500';
+
+    html += `
+      <div class="bg-gray-900/70 border border-white/10 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+        <div class="flex-1">
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-baseline gap-2">
+              <span class="text-sm font-black text-white">${handTitle}</span>
+              <span class="text-xs text-gray-400">נגד דילר ${dStr}</span>
+            </div>
+            <span class="text-xs font-black px-2 py-0.5 rounded-lg bg-white/10 text-emerald-300">✓ ${correctAct}</span>
+          </div>
+          
+          <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+            <div class="h-full ${barColor} rounded-full" style="width: ${successRate}%"></div>
+          </div>
+
+          <div class="flex items-center justify-between mt-1 text-[10px] text-gray-400">
+            <span>דיוק: ${successRate}% (${attempts - mistakes} מתוך ${attempts})</span>
+            <span class="text-red-400 font-semibold">${mistakes} טעויות</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  listEl.innerHTML = html;
+}
+
+function launchWeakPractice() {
+  playTapSound();
+  const weakSpots = loadWeakSpots();
+  const errorItems = Object.entries(weakSpots)
+    .filter(([_, d]) => d.mistakes > 0)
+    .map(([_, d]) => ({ type: d.type, key: d.key, dealer: d.dealer }));
+
+  if (errorItems.length === 0) {
+    alert('לא נרשמו עדיין טעויות לתרגול ממוקד!');
+    return;
+  }
+
+  STATE.drillMode = 'weak';
+  STATE.weakPracticeQueue = errorItems;
+
+  navigateTab('drill', document.querySelector('.tab-item:first-child'));
+  generateNewHand();
+}
+
+function clearWeakSpots() {
+  playTapSound();
+  if (confirm('האם לאפס את כל היסטוריית הטעויות?')) {
+    localStorage.removeItem(STORAGE_KEYS.WEAK);
+    renderWeakSpotsList();
+  }
+}
+
+// ─────────────────────────────────────────────
+// 11. NAVIGATION & INITIALIZATION
+// ─────────────────────────────────────────────
+function navigateTab(targetTab, tabButton) {
+  playTapSound();
+  ['drill', 'matrix', 'weak'].forEach(t => {
+    const el = document.getElementById(`view-${t}`);
+    el.classList.add('hidden');
+    el.style.display = 'none';
+  });
+
+  const activeView = document.getElementById(`view-${targetTab}`);
+  activeView.classList.remove('hidden');
+  activeView.style.display = 'flex';
+
+  document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+  if (tabButton) tabButton.classList.add('active');
+
+  if (targetTab === 'matrix') {
+    renderMatrixGrid();
+  } else if (targetTab === 'weak') {
+    renderWeakSpotsList();
+  } else if (targetTab === 'drill') {
+    // Return to standard drill if navigating back normally
+    if (STATE.drillMode !== 'weak') {
+      STATE.drillMode = 'normal';
+    }
+  }
+}
+
+function initApp() {
+  loadStorage();
+  updateHeaderStats();
+  
+  // Set initial drill view
+  document.getElementById('view-drill').style.display = 'flex';
+  document.getElementById('view-matrix').style.display = 'none';
+  document.getElementById('view-weak').style.display = 'none';
+
+  generateNewHand();
+
+  // iOS safari rubber-band prevention
+  document.addEventListener('gesturestart', e => e.preventDefault());
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Re-deal if user comes back to Safari tab after idle
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && STATE.answered) {
+    generateNewHand();
+  }
+});
+</script>
+</body>
+</html>
