@@ -485,7 +485,7 @@
         <!-- Subtle Divider / Mode Badge -->
         <div class="flex items-center gap-2">
           <div class="h-[1px] w-12 bg-white/10"></div>
-          <div id="mode-badge" class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 font-bold tracking-widest uppercase">
+          <div id="mode-badge" onclick="exitSpecialMode()" class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 font-bold tracking-widest uppercase">
             VS
           </div>
           <div class="h-[1px] w-12 bg-white/10"></div>
@@ -501,10 +501,18 @@
           </div>
         </div>
 
-        <!-- Instant Feedback Toast -->
-        <div id="feedback-box" class="w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-0 transform translate-y-1">
-          <div id="fb-title" class="text-xs font-black"></div>
-          <div id="fb-desc" class="text-[11px] leading-tight opacity-90 mt-0.5 font-medium"></div>
+        <!-- Instant Feedback Toast (Interactive: tap to pause & expand) -->
+        <div id="feedback-box" onclick="onFeedbackBoxClick(event)" class="w-full max-w-[350px] min-h-[60px] rounded-2xl px-3.5 py-2.5 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-0 transform translate-y-1 pointer-events-none">
+          <div class="w-full flex items-center justify-between gap-2">
+            <button id="fb-quick-save" onclick="quickSaveFromToast(event)" class="px-2 py-1 rounded-lg bg-black/30 border border-white/15 text-[10px] font-bold flex items-center gap-1 flex-shrink-0 active:scale-90 transition-transform" title="שמור לשמורים">
+              <span id="fb-save-icon">🔖</span>
+              <span id="fb-save-lbl">שמור</span>
+            </button>
+            <div id="fb-title" class="text-xs font-black flex-1 text-center"></div>
+            <span class="text-[11px] opacity-75 flex-shrink-0">🔍</span>
+          </div>
+          <div id="fb-desc" class="text-[11px] leading-tight opacity-90 mt-1 font-medium"></div>
+          <div id="fb-hint" class="text-[9px] opacity-65 mt-1 font-bold tracking-wide">👆 לחץ כאן להסבר מקיף ללא הגבלת זמן</div>
         </div>
 
       </div>
@@ -637,6 +645,43 @@
       </div>
     </section>
 
+    <!-- ───────────────────────────────────────── -->
+    <!-- 4. SAVED EXPLANATIONS VIEW (תיקיית שמורים) -->
+    <!-- ───────────────────────────────────────── -->
+    <section id="view-saved" class="absolute inset-0 hidden flex-col">
+      <div class="flex-1 overflow-y-auto px-4 pt-3 pb-3">
+        
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h2 class="text-base font-black text-white">🔖 תיקיית שמורים</h2>
+            <p class="text-[11px] text-gray-400">הסברים וטעויות ששמרת לחזרה והעמקה</p>
+          </div>
+          <button onclick="clearSavedItems()" class="px-2.5 py-1 rounded-lg bg-red-900/30 border border-red-500/20 text-red-300 text-[11px] font-bold">
+            נקה הכל
+          </button>
+        </div>
+
+        <div id="saved-list" class="space-y-2.5 mt-3"></div>
+
+        <div id="saved-empty" class="hidden flex-col items-center justify-center py-16 text-center">
+          <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-3xl mb-3">
+            🔖
+          </div>
+          <div class="text-sm font-bold text-gray-200">אין הסברים שמורים עדיין</div>
+          <div class="text-xs text-gray-500 mt-1 max-w-[230px]">לאחר כל יד במאמן המהיר, תוכל ללחוץ על 🔖 שמור או על ההסבר כדי לשמור אותו לכאן.</div>
+        </div>
+
+      </div>
+
+      <!-- Sticky Action Bar for Saved Practice -->
+      <div class="p-3 ios-glass flex-shrink-0">
+        <button id="btn-saved-practice" onclick="launchSavedPractice()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/60 active:scale-[0.98] transition-transform">
+          <span>🔖</span>
+          <span>תרגל את הידיים השמורות שלי</span>
+        </button>
+      </div>
+    </section>
+
   </main>
 
   <!-- ═══════════ BOTTOM TAB BAR (iOS Style) ═══════════ -->
@@ -653,18 +698,25 @@
       <span class="icon">⚡</span>
       <span>תורפה</span>
     </button>
+    <button class="tab-item relative" onclick="navigateTab('saved', this)">
+      <span class="icon">🔖</span>
+      <span>שמורים</span>
+      <span id="saved-badge" class="hidden absolute top-1 left-1/2 translate-x-2.5 bg-amber-500 text-black text-[9px] font-black px-1.5 rounded-full leading-tight">0</span>
+    </button>
   </nav>
 
 </div>
 
-<!-- ═══════════ iOS BOTTOM SHEET (Cell Details) ═══════════ -->
+<!-- ═══════════ iOS BOTTOM SHEET (Cell & Expanded Feedback) ═══════════ -->
 <div id="detail-sheet" class="sheet-backdrop" onclick="if(event.target===this)closeSheet()">
-  <div class="sheet-modal">
+  <div class="sheet-modal max-h-[85dvh] overflow-y-auto">
     <div class="sheet-grabber"></div>
     <div id="sheet-body" class="text-center"></div>
-    <button onclick="closeSheet()" class="w-full mt-5 py-3 rounded-xl bg-white/10 active:bg-white/15 text-white font-bold text-sm">
-      הבנתי, סגור
-    </button>
+    <div id="sheet-actions" class="mt-5 flex flex-col gap-2">
+      <button onclick="closeSheet()" class="w-full py-3 rounded-xl bg-white/10 active:bg-white/15 text-white font-bold text-sm">
+        הבנתי, סגור
+      </button>
+    </div>
   </div>
 </div>
 
@@ -841,7 +893,8 @@ function toggleSound() {
 // ─────────────────────────────────────────────
 const STORAGE_KEYS = {
   STATS: 'bj_iphone_stats_v2',
-  WEAK: 'bj_iphone_weak_v2'
+  WEAK: 'bj_iphone_weak_v2',
+  SAVED: 'bj_iphone_saved_v1'
 };
 
 const STATE = {
@@ -854,6 +907,9 @@ const STATE = {
     correctAction: 'H'
   },
   answered: false,
+  nextRoundTimer: null,
+  sheetPendingNextHand: false,
+  lastDecision: null,
   stats: {
     correct: 0,
     total: 0,
@@ -864,8 +920,9 @@ const STATE = {
   timerInterval: null,
   timerDuration: 3000,
   timerStart: 0,
-  drillMode: 'normal', // 'normal' | 'weak'
+  drillMode: 'normal', // 'normal' | 'weak' | 'saved'
   weakPracticeQueue: [],
+  savedPracticeQueue: [],
   matrixTab: 'hard'
 };
 
@@ -874,6 +931,7 @@ function loadStorage() {
     const savedStats = JSON.parse(localStorage.getItem(STORAGE_KEYS.STATS));
     if (savedStats) STATE.stats = Object.assign(STATE.stats, savedStats);
   } catch(e) {}
+  updateSavedBadge();
 }
 
 function saveStats() {
@@ -890,6 +948,31 @@ function loadWeakSpots() {
 
 function saveWeakSpots(obj) {
   localStorage.setItem(STORAGE_KEYS.WEAK, JSON.stringify(obj));
+}
+
+function loadSavedItems() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.SAVED)) || [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveSavedItems(arr) {
+  localStorage.setItem(STORAGE_KEYS.SAVED, JSON.stringify(arr));
+  updateSavedBadge();
+}
+
+function updateSavedBadge() {
+  const badge = document.getElementById('saved-badge');
+  if (!badge) return;
+  const count = loadSavedItems().length;
+  if (count > 0) {
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -930,10 +1013,29 @@ function pickRandomDealer() {
   return dealerOptions[Math.floor(Math.random() * dealerOptions.length)];
 }
 
+function exitSpecialMode() {
+  if (STATE.drillMode === 'normal') return;
+  playTapSound();
+  STATE.drillMode = 'normal';
+  generateNewHand();
+}
+
 function generateNewHand() {
+  if (STATE.nextRoundTimer) {
+    clearTimeout(STATE.nextRoundTimer);
+    STATE.nextRoundTimer = null;
+  }
+
   // If in Weak Practice Mode, take from weak queue
   if (STATE.drillMode === 'weak' && STATE.weakPracticeQueue.length > 0) {
     const item = STATE.weakPracticeQueue[Math.floor(Math.random() * STATE.weakPracticeQueue.length)];
+    buildSpecificHand(item.type, item.key, item.dealer);
+    return;
+  }
+
+  // If in Saved Practice Mode, take from saved queue
+  if (STATE.drillMode === 'saved' && STATE.savedPracticeQueue.length > 0) {
+    const item = STATE.savedPracticeQueue[Math.floor(Math.random() * STATE.savedPracticeQueue.length)];
     buildSpecificHand(item.type, item.key, item.dealer);
     return;
   }
@@ -1102,6 +1204,92 @@ function generateExplanation(handType, key, dealerCardVal, correctAction, rawCod
   return `דילר חזק מראה ${dStr} — עם סכום ${key} חייבים לקחת סיכון ולקחת קלף.`;
 }
 
+function generateDeepExplanation(handType, key, dealerCardVal, correctAction, rawCode) {
+  const dStr = formatCardValue(dealerCardVal);
+  const fallbacks = { Dh: 'קח קלף (Hit)', Ds: 'עמוד (Stand)', Rh: 'קח קלף (Hit)', Rs: 'עמוד (Stand)', Rp: 'פצל (Split)' };
+  const fallbackNote = fallbacks[rawCode] ? ` אם חוקי השולחן אינם מאפשרים זאת — בצע ${fallbacks[rawCode]}.` : '';
+
+  if (handType === 'pair') {
+    const pStr = formatCardValue(key);
+    if (key === 11) {
+      return `זוג אסים (A,A) נותן סכום חלש של 12 אם לא מפצלים. פיצול של שני אסים הופך כל יד להתחלה של 11 — כשבכ-30.8% מהחבילה נמצאים קלפים בשווי 10, יש לך סיכוי כפול לקבל 21 או יד חזקה מאוד. לכן מפצלים תמיד מול כל קלף של הדילר.`;
+    }
+    if (key === 8) {
+      if (rawCode === 'Rp') {
+        return `16 מול דילר חזק (${dStr}) היא היד עם התוחלת השלילית הקשה ביותר. ויתור (Surrender) מחזיר לך מיד 50% מההימור וזה עדיף סטטיסטית על פני משחק של שתי ידיים של 8 מול ${dStr}. אם ויתור אינו מותר — חובה לפצל 8,8 כדי לא להיתקע עם 16.`;
+      }
+      return `סכום 16 הוא היד הגרועה ביותר בבלאק ג'ק. פיצול של 8,8 הופך יד מפסידה אחת של 16 לשתי הזדמנויות להתחיל מ-8 (שהופך בקלות ל-18 עם קלף של 10). מול דילר ${dStr} הפיצול משפר משמעותית את תוחלת הרווח/חיסכון שלך.`;
+    }
+    if (key === 10) {
+      return `סכום 20 מנצח כמעט 80% מהזמן. פיצול של עשיריות מפרק יד כמעט מובטחת לטובת שני הימורים בינוניים שמתחילים ב-10, והדבר פוגע משמעותית בתוחלת שלך. שחקנים מקצועיים לעולם אינם מפצלים 10,10.`;
+    }
+    if (key === 5) {
+      return `זוג 5,5 שווה 10, ופיצול שלהם משאיר אותך עם שתי ידיים חלשות שמתחילות ב-5 (שמובילות הרבה ל-15 או 16 מסוכנים). במקום זאת, התייחס ליד כסכום 10 קשיח והכפל מול דילר ${dStr} כדי למקסם רווח.${fallbackNote}`;
+    }
+    if (key === 9) {
+      if (correctAction === 'S') {
+        return `זוג 9,9 נותן 18 — סכום שמנצח את קלף ה-7 של הדילר ברוב המקרים (כי הדילר מגיע לרוב ל-17), ומול 10 או A עדיף לשמור על 18 מאשר לסכן סכום כפול בשתי ידיים של 9.`;
+      }
+      return `זוג 9,9 הוא סכום 18 שכבר חזק, אך מול דילר ${dStr} פיצול לשתי ידיים של 9 (סיכוי טוב להגיע ל-19 עם קלפי 10) מייצר רווח צפוי גבוה יותר מאשר עמידה פסיבית על 18.`;
+    }
+    if (key === 4) {
+      if (correctAction === 'P') {
+        return `בזכות חוק DAS (הכפלה אחרי פיצול), פיצול של 4,4 מול קלפים חלשים במיוחד של הדילר (${dStr}) מאפשר לך להפוך יד התחלתית חלשה של 8 לשתי ידיים עם פוטנציאל הכפלה (אם תקבל 5, 6 או 7).`;
+      }
+      return `סכום 8 מול דילר ${dStr} בטוח לחלוטין מפני פסילה. פיצול של 4,4 ללא יתרון מובהק על הדילר רק חושף כסף כפול להפסד במצבים חלשים של 14.`;
+    }
+    if (correctAction === 'P') {
+      return `בזכות האפשרות להכפיל אחרי פיצול (DAS), פיצול של ${pStr},${pStr} מול קלף חלש יחסית של הדילר (${dStr}) נותן לך גמישות לנצל את סיכויי הפסילה הגבוהים של הדילר ולהרוויח יותר בממוצע.`;
+    }
+    return `מול קלף חזק של הדילר (${dStr}), פיצול של ${pStr},${pStr} מגדיל את הסיכון להפסיד פי שניים על ידיים בינוניות. עדיף לקחת קלף (Hit) ולקוות לשיפור של היד היחידה.`;
+  }
+
+  if (handType === 'soft') {
+    const otherVal = key - 11;
+    if (correctAction === 'D') {
+      return `יד רכה (A,${otherVal}) מעניקה "רשת ביטחון" — האס יכול להפוך מ-11 ל-1, ולכן אי אפשר להיפסל במשיכת קלף אחד! מול דילר חלש (${dStr}) שסיכוייו להגיע לפסילה גבוהים, הכפלה (Double) מגדילה את ההימור בדיוק כשהיתרון לצידך.${fallbackNote}`;
+    }
+    if (correctAction === 'S') {
+      if (key >= 19) {
+        return `סופט ${key} (A,${otherVal}) כבר מנצח כמעט כל יד ממוצעת של הדילר (הדילר מסיים בממוצע סביב 18.2). אין הצדקה לסכן יד של 19 או 20 במשיכה נוספת.`;
+      }
+      return `סופט 18 (A,7) מול דילר ${dStr} הוא יד גבולית אך מוצלחת: מול 2, 7 או 8, סכום 18 מנצח או מסיים בתיקו בתדירות גבוהה מספיק כך שעמידה עדיפה על פני הכפלה מסוכנת או משיכה.`;
+    }
+    if (key === 18) {
+      return `טעות נפוצה היא לעמוד על סופט 18 מול ${dStr}! מול 9, 10 או אס, סכום 18 מפסיד בטווח הארוך יותר משהוא מנצח (לדילר קל להגיע ל-19, 20 או 21). כיוון שהאס מגן עליך מפסילה, משיכת קלף (Hit) משפרת את התוחלת שלך.`;
+    }
+    return `יד רכה (A,${otherVal}) נותנת ${key} חלש מדי לעמידה, ומאפשרת לך לקחת קלף בלי שום סיכון להיפסל. מול דילר ${dStr} שאין מולו יתרון מובהק להכפלה, לוקחים קלף (Hit) בחינם לחפש 19–21.`;
+  }
+
+  // Hard hands
+  if (correctAction === 'R') {
+    return `סכום קשיח ${key} מול קלף חזק מאוד של הדילר (${dStr}) מפסיד ביותר מ-75% מהמקרים! כשאתה מוותר (Surrender) ומציל חצי מההימור שלך מיד, אתה מפסיד 50% בלבד במקום כ-54%–60% בממוצע אם תמשיך לשחק את היד.${fallbackNote}`;
+  }
+  if (correctAction === 'D') {
+    if (key === 11) {
+      return `סכום 11 הוא היד הטובה ביותר להכפלה בבלאק ג'ק: כמעט שליש מהקלפים בחבילה שווים 10 ויביאו אותך ל-21, וכל קלף של 7, 8 או 9 ייתן יד חזקה (18–20). אפילו מול דילר ${dStr} התוחלת של הכפלה חיובית יותר ממשיכה רגילה.${fallbackNote}`;
+    }
+    if (key === 10) {
+      return `עם 10 ביד וקלף מראה ${dStr} אצל הדילר, הסיכוי שלך לקבל 10 או אס ולהגיע ל-20 או 21 גבוה משמעותית מהיכולת של הדילר לנצח סכום 20. לכן משתלם להכפיל את ההימור.${fallbackNote}`;
+    }
+    return `סכום 9 מול קלף חלש של הדילר (${dStr}) יוצר יתרון ברור: יש לך סיכוי מצוין לקפוץ ל-17–19 בעוד שהדילר נמצא בסכנת פריצה (Bust) של מעל 37%.${fallbackNote}`;
+  }
+  if (correctAction === 'S') {
+    if (key >= 17) {
+      return `עם סכום ${key} קשיח, רוב הקלפים בחבילה יפסלו אותך (מעל 69% סיכוי ל-Bust על 17). מול כל דילר, עמידה היא האפשרות היחידה שמשאירה לך סיכוי לנצח.`;
+    }
+    return `עקרון מפתח בבלאק ג'ק ("תן לדילר לפסול"): כשהדילר חושף קלף חלש (${dStr}), הוא מחויב למשוך עד 17 ומסתכן בכ-35% עד 42% סיכוי לפסול. גם אם ${key} נראה נמוך, עמידה מונעת ממך להסתכן בפסילה מיותרת לפניו.`;
+  }
+  // Hard Hit
+  if (key <= 8) {
+    return `עם ${key} ביד אי אפשר להיפסל בשום מקרה (הקלף הגבוה ביותר הוא 11 או 10). משיכת קלף היא חינמית לחלוטין ורק מקרבת אותך לידיים חזקות.`;
+  }
+  if (key === 12) {
+    return `סכום 12 מול דילר ${dStr} הוא מצב עדין: רק קלפי 10 (כ-30.8% מהחבילה) יפסלו אותך, וכל שאר הקלפים (69.2%) ישפרו או ישמרו אותך במשחק. מול 2 ו-3 סיכוי הפסילה של הדילר נמוך מדי (כ-35%), ומול 7 ומעלה הוא חזק מדי מכדי שתוכל לעמוד על 12.`;
+  }
+  return `מול קלף חזק של הדילר (${dStr}), סביר מאוד שהדילר יסיים בין 17 ל-21 (הסיכוי שלו לפסול הוא רק ~17%–26%). עמידה על ${key} משמעותה הפסד כמעט ודאי; משיכת קלף (Hit) מסוכנת אך מצילה ידיים רבות והכרחית לצמצום ההפסד.`;
+}
+
 // ─────────────────────────────────────────────
 // 6. UI RENDERING & USER INTERACTIONS
 // ─────────────────────────────────────────────
@@ -1138,8 +1326,11 @@ function renderDrillUI() {
   // Mode Badge indicator
   const modeBadge = document.getElementById('mode-badge');
   if (STATE.drillMode === 'weak') {
-    modeBadge.textContent = 'תרגול טעויות ⚡';
-    modeBadge.className = 'px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] text-amber-300 font-extrabold tracking-wider';
+    modeBadge.textContent = 'תרגול טעויות ⚡ ✕';
+    modeBadge.className = 'px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] text-amber-300 font-extrabold tracking-wider cursor-pointer active:scale-95';
+  } else if (STATE.drillMode === 'saved') {
+    modeBadge.textContent = 'תרגול שמורים 🔖 ✕';
+    modeBadge.className = 'px-3 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-[10px] text-orange-300 font-extrabold tracking-wider cursor-pointer active:scale-95';
   } else {
     modeBadge.textContent = 'VS';
     modeBadge.className = 'px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-400 font-bold tracking-widest uppercase';
@@ -1147,7 +1338,7 @@ function renderDrillUI() {
 
   // Hide Feedback Toast
   const fbBox = document.getElementById('feedback-box');
-  fbBox.className = 'w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-0 transform translate-y-1';
+  fbBox.className = 'w-full max-w-[350px] min-h-[60px] rounded-2xl px-3.5 py-2.5 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-0 transform translate-y-1 pointer-events-none';
   document.getElementById('fb-title').textContent = '';
   document.getElementById('fb-desc').textContent = '';
 
@@ -1185,8 +1376,64 @@ function updateHeaderStats() {
 }
 
 // ─────────────────────────────────────────────
-// 7. ANSWER SUBMISSION & FEEDBACK
+// 7. ANSWER SUBMISSION, EXPANDED EXPLANATION & SAVING
 // ─────────────────────────────────────────────
+function getHandTitle(type, key) {
+  if (type === 'hard') return `סכום קשיח ${key}`;
+  if (type === 'soft') return `סופט ${key} (A,${key - 11})`;
+  const pStr = formatCardValue(key);
+  return `זוג ${pStr},${pStr}`;
+}
+
+function isDecisionSaved(type, key, dealerVal) {
+  const id = `${type}_${key}_${dealerVal}`;
+  return loadSavedItems().some(item => item.id === id);
+}
+
+function toggleSaveDecision(decision) {
+  const id = `${decision.type}_${decision.key}_${decision.dealer}`;
+  const items = loadSavedItems();
+  const idx = items.findIndex(item => item.id === id);
+
+  if (idx >= 0) {
+    items.splice(idx, 1);
+    saveSavedItems(items);
+    return false;
+  } else {
+    items.unshift({
+      id,
+      type: decision.type,
+      key: decision.key,
+      dealer: decision.dealer,
+      chosenAction: decision.chosenAction,
+      correctAction: decision.correctAction,
+      rawStrategy: decision.rawStrategy,
+      isCorrect: decision.isCorrect,
+      shortExp: decision.shortExp,
+      deepExp: decision.deepExp,
+      savedAt: Date.now()
+    });
+    saveSavedItems(items);
+    return true;
+  }
+}
+
+function updateToastSaveButton(saved) {
+  const btn = document.getElementById('fb-quick-save');
+  const icon = document.getElementById('fb-save-icon');
+  const lbl = document.getElementById('fb-save-lbl');
+  if (!btn || !icon || !lbl) return;
+  if (saved) {
+    icon.textContent = '✅';
+    lbl.textContent = 'נשמר';
+    btn.className = 'px-2 py-1 rounded-lg bg-amber-500/25 border border-amber-400/50 text-amber-200 text-[10px] font-bold flex items-center gap-1 flex-shrink-0 active:scale-90 transition-transform';
+  } else {
+    icon.textContent = '🔖';
+    lbl.textContent = 'שמור';
+    btn.className = 'px-2 py-1 rounded-lg bg-black/30 border border-white/15 text-[10px] font-bold flex items-center gap-1 flex-shrink-0 active:scale-90 transition-transform';
+  }
+}
+
 function handleChoice(chosenAction) {
   if (STATE.answered) return;
   STATE.answered = true;
@@ -1229,12 +1476,15 @@ function handleChoice(chosenAction) {
   if (!isCorrect) weakSpots[spotId].mistakes++;
   saveWeakSpots(weakSpots);
 
-  // Show Toast Feedback
-  const fbBox = document.getElementById('feedback-box');
-  const fbTitle = document.getElementById('fb-title');
-  const fbDesc = document.getElementById('fb-desc');
-
-  const explanation = generateExplanation(
+  // Build Explanations & Save Last Decision
+  const shortExp = generateExplanation(
+    STATE.currentHand.handType,
+    STATE.currentHand.handKey,
+    STATE.currentHand.dealerCard.val,
+    STATE.currentHand.correctAction,
+    STATE.currentHand.rawStrategy
+  );
+  const deepExp = generateDeepExplanation(
     STATE.currentHand.handType,
     STATE.currentHand.handKey,
     STATE.currentHand.dealerCard.val,
@@ -1242,16 +1492,39 @@ function handleChoice(chosenAction) {
     STATE.currentHand.rawStrategy
   );
 
+  STATE.lastDecision = {
+    type: STATE.currentHand.handType,
+    key: STATE.currentHand.handKey,
+    dealer: STATE.currentHand.dealerCard.val,
+    playerCards: STATE.currentHand.playerCards.map(c => ({ ...c })),
+    dealerCard: { ...STATE.currentHand.dealerCard },
+    chosenAction,
+    correctAction: STATE.currentHand.correctAction,
+    rawStrategy: STATE.currentHand.rawStrategy,
+    isCorrect,
+    shortExp,
+    deepExp
+  };
+
+  // Show Interactive Toast Feedback
+  const fbBox = document.getElementById('feedback-box');
+  const fbTitle = document.getElementById('fb-title');
+  const fbDesc = document.getElementById('fb-desc');
+
   if (isCorrect) {
-    fbBox.className = 'w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-100 transform translate-y-0 bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 shadow-lg shadow-emerald-950/50';
+    fbBox.className = 'w-full max-w-[350px] min-h-[60px] rounded-2xl px-3.5 py-2.5 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-100 transform translate-y-0 pointer-events-auto cursor-pointer bg-emerald-950/85 border border-emerald-500/45 text-emerald-200 shadow-lg shadow-emerald-950/50 active:scale-[0.98]';
     fbTitle.innerHTML = `<span class="text-sm">✅</span> החלטה מדויקת! ${actionNames[STATE.currentHand.correctAction]}`;
-    fbDesc.textContent = explanation;
+    fbDesc.textContent = shortExp;
   } else {
-    fbBox.className = 'w-full max-w-[340px] min-h-[52px] rounded-2xl px-4 py-2 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-100 transform translate-y-0 bg-red-950/85 border border-red-500/40 text-red-200 shadow-lg shadow-red-950/50';
+    fbBox.className = 'w-full max-w-[350px] min-h-[60px] rounded-2xl px-3.5 py-2.5 flex flex-col justify-center items-center text-center transition-all duration-200 opacity-100 transform translate-y-0 pointer-events-auto cursor-pointer bg-red-950/90 border border-red-500/45 text-red-200 shadow-lg shadow-red-950/50 active:scale-[0.98]';
     const reasonTimeout = chosenAction === '_TIMEOUT' ? '(נגמר הזמן!) ' : '';
-    fbTitle.innerHTML = `<span class="text-sm">❌</span> ${reasonTimeout}המהלך הנכון: <strong>${actionNames[STATE.currentHand.correctAction]}</strong>`;
-    fbDesc.textContent = explanation;
+    fbTitle.innerHTML = `<span class="text-sm">❌</span> ${reasonTimeout}נכון: <strong>${actionNames[STATE.currentHand.correctAction]}</strong>`;
+    fbDesc.textContent = shortExp;
   }
+
+  updateToastSaveButton(
+    isDecisionSaved(STATE.lastDecision.type, STATE.lastDecision.key, STATE.lastDecision.dealer)
+  );
 
   // Disable keypad temporarily
   ['btn-h', 'btn-s', 'btn-d', 'btn-p', 'btn-r'].forEach(id => {
@@ -1259,11 +1532,159 @@ function handleChoice(chosenAction) {
     if (b) b.disabled = true;
   });
 
-  // Next round delay
-  const nextDelay = isCorrect ? 950 : 2500;
-  setTimeout(() => {
+  // Schedule auto-advance (can be cancelled anytime by tapping feedback!)
+  const nextDelay = isCorrect ? 1400 : 2800;
+  STATE.nextRoundTimer = setTimeout(() => {
+    STATE.nextRoundTimer = null;
     generateNewHand();
   }, nextDelay);
+}
+
+function quickSaveFromToast(e) {
+  if (e) e.stopPropagation();
+  if (!STATE.lastDecision) return;
+  playTapSound();
+
+  const saved = toggleSaveDecision(STATE.lastDecision);
+  updateToastSaveButton(saved);
+
+  // Give user extra breathing room if they just clicked save
+  if (STATE.nextRoundTimer) {
+    clearTimeout(STATE.nextRoundTimer);
+    STATE.nextRoundTimer = setTimeout(() => {
+      STATE.nextRoundTimer = null;
+      generateNewHand();
+    }, 1800);
+  }
+}
+
+function onFeedbackBoxClick(e) {
+  if (!STATE.lastDecision) return;
+  // Cancel auto-advance immediately so user can read without time limit!
+  if (STATE.nextRoundTimer) {
+    clearTimeout(STATE.nextRoundTimer);
+    STATE.nextRoundTimer = null;
+  }
+  playTapSound();
+  openExpandedFeedback(STATE.lastDecision, true);
+}
+
+function openExpandedFeedback(decision, isFromDrill) {
+  STATE.sheetPendingNextHand = !!isFromDrill;
+
+  const actionNames = {
+    H: 'HIT (קח קלף)',
+    S: 'STAND (עמוד)',
+    D: 'DOUBLE (הכפל)',
+    P: 'SPLIT (פצל)',
+    R: 'SURRENDER (ויתור)',
+    _TIMEOUT: 'נגמר הזמן ⏱️'
+  };
+
+  const dStr = formatCardValue(decision.dealer);
+  const handTitle = getHandTitle(decision.type, decision.key);
+  const savedNow = isDecisionSaved(decision.type, decision.key, decision.dealer);
+
+  // Status Banner
+  let statusBadgeHtml = '';
+  if (decision.isCorrect) {
+    statusBadgeHtml = `
+      <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black mb-3">
+        <span>✅</span>
+        <span>בחרת נכון: ${actionNames[decision.correctAction]}</span>
+      </div>`;
+  } else {
+    statusBadgeHtml = `
+      <div class="flex flex-col items-center gap-1.5 mb-3">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold">
+          <span>❌</span>
+          <span>בחרת: ${actionNames[decision.chosenAction] || decision.chosenAction}</span>
+        </div>
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black">
+          <span>✓</span>
+          <span>המהלך הנכון: ${actionNames[decision.correctAction]}</span>
+        </div>
+      </div>`;
+  }
+
+  // Mini Card Summary
+  const pCardsText = decision.playerCards && decision.playerCards.length
+    ? decision.playerCards.map(c => `${c.display}${c.suit}`).join('  ')
+    : handTitle;
+  const dCardText = decision.dealerCard
+    ? `${decision.dealerCard.display}${decision.dealerCard.suit}`
+    : dStr;
+
+  const sheetBody = document.getElementById('sheet-body');
+  sheetBody.innerHTML = `
+    ${statusBadgeHtml}
+    <div class="flex items-center justify-center gap-2 mb-3 flex-wrap">
+      <span class="px-3 py-1 rounded-xl bg-white/10 text-xs font-black text-white">${handTitle} <span class="opacity-70 font-normal">(${pCardsText})</span></span>
+      <span class="text-gray-500 font-bold text-xs">מול</span>
+      <span class="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-black">דילר ${dCardText}</span>
+    </div>
+
+    <div class="text-right bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-black text-emerald-400">📖 הסבר מקיף (ללא הגבלת זמן)</span>
+        <span class="text-[10px] text-gray-400 font-mono">${decision.rawStrategy}</span>
+      </div>
+      <p class="text-xs text-gray-200 leading-relaxed font-medium">${decision.deepExp}</p>
+    </div>
+  `;
+
+  // Store active sheet decision for save toggle
+  STATE._sheetDecision = decision;
+
+  const sheetActions = document.getElementById('sheet-actions');
+  sheetActions.innerHTML = `
+    <button id="sheet-save-btn" onclick="handleSheetSaveToggle()" class="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+      savedNow
+        ? 'bg-amber-500/25 border border-amber-400/50 text-amber-200'
+        : 'bg-white/10 border border-white/10 text-white'
+    }">
+      <span>${savedNow ? '✅' : '🔖'}</span>
+      <span>${savedNow ? 'נשמר בתיקיית שמורים (לחץ להסרה)' : 'שמור לתיקיית שמורים'}</span>
+    </button>
+    <button onclick="closeSheet()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-sm shadow-lg shadow-emerald-950/60 active:scale-[0.98] transition-transform">
+      ${isFromDrill ? '➡️ המשך ליד הבאה' : 'הבנתי, סגור'}
+    </button>
+  `;
+
+  document.getElementById('detail-sheet').classList.add('active');
+}
+
+function handleSheetSaveToggle() {
+  if (!STATE._sheetDecision) return;
+  playTapSound();
+  const savedNow = toggleSaveDecision(STATE._sheetDecision);
+
+  // Sync toast save button if visible
+  if (STATE.lastDecision &&
+      STATE.lastDecision.type === STATE._sheetDecision.type &&
+      STATE.lastDecision.key === STATE._sheetDecision.key &&
+      STATE.lastDecision.dealer === STATE._sheetDecision.dealer) {
+    updateToastSaveButton(savedNow);
+  }
+
+  const btn = document.getElementById('sheet-save-btn');
+  if (btn) {
+    btn.className = `w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+      savedNow
+        ? 'bg-amber-500/25 border border-amber-400/50 text-amber-200'
+        : 'bg-white/10 border border-white/10 text-white'
+    }`;
+    btn.innerHTML = `
+      <span>${savedNow ? '✅' : '🔖'}</span>
+      <span>${savedNow ? 'נשמר בתיקיית שמורים (לחץ להסרה)' : 'שמור לתיקיית שמורים'}</span>
+    `;
+  }
+
+  // If currently viewing saved tab, refresh list
+  const savedView = document.getElementById('view-saved');
+  if (savedView && savedView.style.display === 'flex') {
+    renderSavedList();
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -1395,14 +1816,9 @@ function renderMatrixGrid() {
 
 function openCellDetails(category, key, dealerVal, rawCode) {
   playTapSound();
+  STATE.sheetPendingNextHand = false;
   const dStr = formatCardValue(dealerVal);
-  let handName = '';
-  if (category === 'hard') handName = `סכום קשיח ${key}`;
-  else if (category === 'soft') handName = `סופט ${key} (A,${key - 11})`;
-  else {
-    const pStr = formatCardValue(key);
-    handName = `זוג ${pStr},${pStr}`;
-  }
+  const handName = getHandTitle(category, key);
 
   const primaryAct = getPrimaryAction(rawCode);
   const actionFullNames = {
@@ -1417,7 +1833,21 @@ function openCellDetails(category, key, dealerVal, rawCode) {
     Rp: 'SURRENDER — ויתור (אם אסור: פצל)'
   };
 
-  const explanation = generateExplanation(category, key, dealerVal, primaryAct, rawCode);
+  const shortExp = generateExplanation(category, key, dealerVal, primaryAct, rawCode);
+  const deepExp = generateDeepExplanation(category, key, dealerVal, primaryAct, rawCode);
+
+  STATE._sheetDecision = {
+    type: category,
+    key,
+    dealer: dealerVal,
+    chosenAction: primaryAct,
+    correctAction: primaryAct,
+    rawStrategy: rawCode,
+    isCorrect: true,
+    shortExp,
+    deepExp
+  };
+  const savedNow = isDecisionSaved(category, key, dealerVal);
 
   const sheetBody = document.getElementById('sheet-body');
   sheetBody.innerHTML = `
@@ -1429,9 +1859,25 @@ function openCellDetails(category, key, dealerVal, rawCode) {
     <div class="inline-block px-5 py-2.5 rounded-2xl text-base font-black tracking-wide my-2 c-${primaryAct}">
       ${actionFullNames[rawCode] || primaryAct}
     </div>
-    <div class="mt-4 text-xs text-gray-300 leading-relaxed max-w-xs mx-auto text-right bg-white/5 p-3.5 rounded-xl border border-white/5">
-      ${explanation}
+    <div class="mt-4 text-xs text-gray-200 leading-relaxed text-right bg-white/5 p-3.5 rounded-xl border border-white/5 space-y-1.5">
+      <div class="font-black text-emerald-400 text-[11px]">📖 הסבר מלא</div>
+      <p>${deepExp}</p>
     </div>
+  `;
+
+  const sheetActions = document.getElementById('sheet-actions');
+  sheetActions.innerHTML = `
+    <button id="sheet-save-btn" onclick="handleSheetSaveToggle()" class="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+      savedNow
+        ? 'bg-amber-500/25 border border-amber-400/50 text-amber-200'
+        : 'bg-white/10 border border-white/10 text-white'
+    }">
+      <span>${savedNow ? '✅' : '🔖'}</span>
+      <span>${savedNow ? 'נשמר בתיקיית שמורים (לחץ להסרה)' : 'שמור לתיקיית שמורים'}</span>
+    </button>
+    <button onclick="closeSheet()" class="w-full py-3 rounded-xl bg-white/10 active:bg-white/15 text-white font-bold text-sm">
+      הבנתי, סגור
+    </button>
   `;
 
   document.getElementById('detail-sheet').classList.add('active');
@@ -1440,6 +1886,10 @@ function openCellDetails(category, key, dealerVal, rawCode) {
 function closeSheet() {
   playTapSound();
   document.getElementById('detail-sheet').classList.remove('active');
+  if (STATE.sheetPendingNextHand) {
+    STATE.sheetPendingNextHand = false;
+    generateNewHand();
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -1551,11 +2001,126 @@ function clearWeakSpots() {
 }
 
 // ─────────────────────────────────────────────
+// 10b. SAVED EXPLANATIONS (תיקיית שמורים)
+// ─────────────────────────────────────────────
+function renderSavedList() {
+  const items = loadSavedItems();
+  const listEl = document.getElementById('saved-list');
+  const emptyEl = document.getElementById('saved-empty');
+  const practiceBtn = document.getElementById('btn-saved-practice');
+
+  if (items.length === 0) {
+    listEl.innerHTML = '';
+    emptyEl.classList.remove('hidden');
+    emptyEl.classList.add('flex');
+    practiceBtn.disabled = true;
+    practiceBtn.classList.add('opacity-40');
+    return;
+  }
+
+  emptyEl.classList.add('hidden');
+  emptyEl.classList.remove('flex');
+  practiceBtn.disabled = false;
+  practiceBtn.classList.remove('opacity-40');
+
+  const actionNames = {
+    H: 'Hit (קח)',
+    S: 'Stand (עמוד)',
+    D: 'Double (הכפל)',
+    P: 'Split (פצל)',
+    R: 'Surrender (ויתור)',
+    _TIMEOUT: 'נגמר הזמן'
+  };
+
+  let html = '';
+  items.forEach(item => {
+    const handTitle = getHandTitle(item.type, item.key);
+    const dStr = formatCardValue(item.dealer);
+    const correctName = actionNames[item.correctAction] || item.correctAction;
+    const chosenName = actionNames[item.chosenAction] || item.chosenAction;
+
+    const mistakeBadge = item.isCorrect
+      ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">✅ צדקת כששמרת</span>`
+      : `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-300">❌ הטעות שלך: ${chosenName}</span>`;
+
+    html += `
+      <div onclick="openSavedItemDetail('${item.id}')" class="bg-gray-900/75 border border-white/10 rounded-2xl p-3.5 cursor-pointer active:scale-[0.99] transition-transform">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-black text-white">${handTitle}</span>
+              <span class="text-xs text-gray-400">מול דילר ${dStr}</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full c-${item.correctAction}">✓ צריך: ${correctName}</span>
+              ${mistakeBadge}
+            </div>
+          </div>
+          <button onclick="removeSavedItem(event, '${item.id}')" class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs text-gray-400 active:bg-red-500/20 active:text-red-300 flex-shrink-0" title="הסר משמורים">
+            🗑️
+          </button>
+        </div>
+
+        <p class="text-[11px] text-gray-300 leading-relaxed bg-black/30 rounded-xl p-2.5 border border-white/5">
+          ${item.deepExp || item.shortExp}
+        </p>
+      </div>
+    `;
+  });
+
+  listEl.innerHTML = html;
+}
+
+function openSavedItemDetail(id) {
+  const item = loadSavedItems().find(x => x.id === id);
+  if (!item) return;
+  playTapSound();
+  openExpandedFeedback(item, false);
+}
+
+function removeSavedItem(e, id) {
+  if (e) e.stopPropagation();
+  playTapSound();
+  const items = loadSavedItems().filter(x => x.id !== id);
+  saveSavedItems(items);
+  renderSavedList();
+}
+
+function clearSavedItems() {
+  playTapSound();
+  if (loadSavedItems().length === 0) return;
+  if (confirm('האם למחוק את כל ההסברים מתיקיית השמורים?')) {
+    saveSavedItems([]);
+    renderSavedList();
+  }
+}
+
+function launchSavedPractice() {
+  playTapSound();
+  const items = loadSavedItems();
+  if (items.length === 0) {
+    alert('אין עדיין ידיים שמורות לתרגול!');
+    return;
+  }
+
+  STATE.drillMode = 'saved';
+  STATE.savedPracticeQueue = items.map(i => ({ type: i.type, key: i.key, dealer: i.dealer }));
+
+  navigateTab('drill', document.querySelector('.tab-item:first-child'));
+  generateNewHand();
+}
+
+// ─────────────────────────────────────────────
 // 11. NAVIGATION & INITIALIZATION
 // ─────────────────────────────────────────────
 function navigateTab(targetTab, tabButton) {
   playTapSound();
-  ['drill', 'matrix', 'weak'].forEach(t => {
+  if (targetTab !== 'drill' && STATE.nextRoundTimer) {
+    clearTimeout(STATE.nextRoundTimer);
+    STATE.nextRoundTimer = null;
+  }
+
+  ['drill', 'matrix', 'weak', 'saved'].forEach(t => {
     const el = document.getElementById(`view-${t}`);
     el.classList.add('hidden');
     el.style.display = 'none';
@@ -1572,10 +2137,15 @@ function navigateTab(targetTab, tabButton) {
     renderMatrixGrid();
   } else if (targetTab === 'weak') {
     renderWeakSpotsList();
+  } else if (targetTab === 'saved') {
+    renderSavedList();
   } else if (targetTab === 'drill') {
-    // Return to standard drill if navigating back normally
-    if (STATE.drillMode !== 'weak') {
+    // Keep weak/saved mode only when launched intentionally, otherwise reset to normal
+    if (STATE.drillMode !== 'weak' && STATE.drillMode !== 'saved') {
       STATE.drillMode = 'normal';
+    }
+    if (STATE.answered && !STATE.sheetPendingNextHand) {
+      generateNewHand();
     }
   }
 }
@@ -1588,6 +2158,7 @@ function initApp() {
   document.getElementById('view-drill').style.display = 'flex';
   document.getElementById('view-matrix').style.display = 'none';
   document.getElementById('view-weak').style.display = 'none';
+  document.getElementById('view-saved').style.display = 'none';
 
   generateNewHand();
 
@@ -1597,9 +2168,9 @@ function initApp() {
 
 document.addEventListener('DOMContentLoaded', initApp);
 
-// Re-deal if user comes back to Safari tab after idle
+// Re-deal if user comes back to Safari tab after idle (unless reading expanded sheet)
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && STATE.answered) {
+  if (!document.hidden && STATE.answered && !STATE.sheetPendingNextHand && !STATE.nextRoundTimer) {
     generateNewHand();
   }
 });
